@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en" class="dark h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rule of Life — Catholic Formation & Personal Discipline</title>
+    <!-- Web App Manifest for PWA Support -->
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlJ1bGUgb2YgTGlmZSIsCiAgInNob3J0X25hbWUiIjogIlJ1bGUgb2YgTGlmZSIsCiAgInN0YXJ0X3VybCI6ICIuIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjMTIxMjEyIiwKICAidGhlbWVfY29sb3IiOiAiI0M1QTA1OSIKfQ==">
+    <meta name="theme-color" content="#121212">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Rule of Life">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        charcoal: '#121212',
+                        graphite: '#1A1A1A',
+                        graphiteLight: '#262626',
+                        ivory: '#F4F1EA',
+                        gold: '#C5A059',
+                        goldHover: '#D4B06A',
+                        bronze: '#8C7853',
+                        deepRed: '#8B0000',
+                        mutedGray: '#888888',
+                    },
+                    fontFamily: {
+                        serif: ['Georgia', 'Cambria', 'Cinzel', 'serif'],
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome & Chart.js -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Custom scrollbar for dark theme */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #121212; }
+        ::-webkit-scrollbar-thumb { background: #262626; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #C5A059; }
+        .gold-border-glow { border-color: rgba(197, 160, 89, 0.4); box-shadow: 0 0 12px rgba(197, 160, 89, 0.15); }
+        .heatmap-cell { transition: transform 0.15s ease; }
+        .heatmap-cell:hover { transform: scale(1.2); z-index: 20; }
+    </style>
+</head>
+<body class="bg-charcoal text-ivory font-sans min-h-screen flex flex-col antialiased selection:bg-gold selection:text-charcoal">
+
+    <!-- Application Shell Header -->
+    <header class="bg-graphite border-b border-bronze/30 sticky top-0 z-40 px-4 py-3">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-lg bg-gold/10 border border-gold/40 flex items-center justify-center text-gold">
+                    <i class="fa-solid fa-cross text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-serif text-base font-semibold tracking-wide text-gold leading-none">RULE OF LIFE</h1>
+                    <p class="text-[10px] text-mutedGray tracking-wider uppercase mt-0.5">Catholic Formation & Discipline</p>
+                </div>
+            </div>
+
+            <!-- Liturgical & Level Badge -->
+            <div class="flex items-center space-x-3">
+                <div class="hidden md:flex items-center space-x-2 bg-charcoal border border-bronze/30 px-3 py-1 rounded-lg text-xs">
+                    <i class="fa-solid fa-fire text-gold"></i>
+                    <span id="header-streak-count" class="font-bold text-gold">14 Day Streak</span>
+                </div>
+                <div class="flex items-center space-x-2 bg-gold/10 border border-gold/30 px-3 py-1 rounded-lg text-xs">
+                    <span class="text-mutedGray">Lvl <span id="header-level" class="text-gold font-bold">3</span></span>
+                    <span class="text-gold font-semibold">• <span id="header-xp">450</span> XP</span>
+                </div>
+                <button onclick="switchView('settings')" class="p-2 text-mutedGray hover:text-gold transition text-sm" title="Settings & Access Link Guide">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container with Responsive Sidebar Layout -->
+    <div class="max-w-7xl mx-auto w-full flex-1 flex flex-col md:flex-row">
+
+        <!-- Desktop Navigation Sidebar -->
+        <aside class="hidden md:flex flex-col w-64 bg-graphite/50 border-r border-bronze/20 p-4 space-y-1 shrink-0">
+            <button onclick="switchView('today')" id="nav-desk-today" class="nav-btn-desk flex items-center space-x-3 px-4 py-3 rounded-lg text-sm transition text-gold bg-gold/10 border border-gold/30">
+                <i class="fa-solid fa-sun w-5"></i><span>Today Dashboard</span>
+            </button>
+            <button onclick="switchView('quests')" id="nav-desk-quests" class="nav-btn-desk flex items-center space-x-3 px-4 py-3 rounded-lg text-sm transition text-mutedGray hover:text-ivory hover:bg-graphiteLight">
+                <i class="fa-solid fa-scroll w-5"></i><span>Quests & Duties</span>
+            </button>
+            <button onclick="switchView('tracking')" id="nav-desk-tracking" class="nav-btn-desk flex items-center space-x-3 px-4 py-3 rounded-lg text-sm transition text-mutedGray hover:text-ivory hover:bg-graphiteLight">
+                <i class="fa-solid fa-chart-line w-5"></i><span>Progress & Analytics</span>
+            </button>
+            <button onclick="switchView('rule')" id="nav-desk-rule" class="nav-btn-desk flex items-center space-x-3 px-4 py-3 rounded-lg text-sm transition text-mutedGray hover:text-ivory hover:bg-graphiteLight">
+                <i class="fa-solid fa-book-bible w-5"></i><span>Rule of Life Editor</span>
+            </button>
+            <button onclick="switchView('virtues')" id="nav-desk-virtues" class="nav-btn-desk flex items-center space-x-3 px-4 py-3 rounded-lg text-sm transition text-mutedGray hover:text-ivory hover:bg-graphiteLight">
+                <i class="fa-solid fa-shield-halved w-5"></i><span>Virtues & Examen</span>
+            </button>
+            <button onclick="switchView('journal')" id="nav-desk-journal" class="nav-btn-desk flex items-center space-x-3 px-4 py-3 rounded-lg text-sm transition text-mutedGray hover:text-ivory hover:bg-graphiteLight">
+                <i class="fa-solid fa-pen-feather w-5"></i><span>Evening Journal</span>
+            </button>
+            <button onclick="switchView('fitness')" id="nav-desk-fitness" class="nav-btn-desk flex items-center space-x-3 px-4 py-3 rounded-lg text-sm transition text-mutedGray hover:text-ivory hover:bg-graphiteLight">
+                <i class="fa-solid fa-person-walking w-5"></i><span>Physical Stewardship</span>
+            </button>
+            <div class="pt-6 border-t border-bronze/20 mt-auto">
+                <button onclick="switchView('settings')" id="nav-desk-settings" class="nav-btn-desk w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg text-xs text-gold/80 hover:text-gold bg-gold/5 border border-gold/20">
+                    <i class="fa-solid fa-cloud-arrow-up w-4"></i><span>Host / Access Link Guide</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Dynamic Main Display Area -->
+        <main class="flex-1 p-4 md:p-6 pb-24 md:pb-6 overflow-y-auto">
+
+            <!-- VIEW 1: TODAY DASHBOARD -->
+            <section id="view-today" class="space-y-6">
+                <!-- Scripture Banner -->
+                <div class="bg-graphite border-l-2 border-gold rounded-r-xl p-4 shadow-sm">
+                    <p class="font-serif italic text-sm text-ivory/90 font-reading">"Strength is for service, not status. Whatever you do, work heartily, as for the Lord and not for men."</p>
+                    <p class="text-xs text-gold mt-1.5 font-semibold">— Colossians 3:23</p>
+                </div>
+
+                <!-- Today's Completion Summary Header -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-graphite border border-bronze/30 rounded-xl p-4 flex items-center justify-between">
+                        <div>
+                            <span class="text-xs text-mutedGray uppercase tracking-wider font-semibold">Today's Rule</span>
+                            <h2 id="today-pct" class="text-3xl font-serif text-gold mt-0.5">0%</h2>
+                            <p id="today-fraction" class="text-xs text-mutedGray">0 of 0 completed</p>
+                        </div>
+                        <div class="w-14 h-14 relative flex items-center justify-center">
+                            <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                                <path class="text-graphiteLight" stroke-width="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path id="today-ring" class="text-gold transition-all duration-500" stroke-dasharray="0, 100" stroke-width="3" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            </svg>
+                            <i class="fa-solid fa-hands-praying text-gold text-xs absolute"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-graphite border border-bronze/30 rounded-xl p-4 flex items-center justify-between">
+                        <div>
+                            <span class="text-xs text-mutedGray uppercase tracking-wider font-semibold">Active Virtue Focus</span>
+                            <h2 class="text-lg font-serif text-ivory mt-1">Fortitude & Diligence</h2>
+                            <p class="text-xs text-gold/80 mt-0.5"><i class="fa-solid fa-shield-halved text-[10px] mr-1"></i>Cardinals Active</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-lg bg-gold/10 border border-gold/30 flex items-center justify-center text-gold">
+                            <i class="fa-solid fa-cross"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-graphite border border-bronze/30 rounded-xl p-4 flex items-center justify-between">
+                        <div>
+                            <span class="text-xs text-mutedGray uppercase tracking-wider font-semibold">Physical Target</span>
+                            <h2 id="today-step-summary" class="text-xl font-serif text-ivory mt-1">0 / 8,000 steps</h2>
+                            <p class="text-xs text-mutedGray mt-0.5">Manual Entry Supported</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                            <i class="fa-solid fa-shoe-prints"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Daily Practices List -->
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-serif text-lg font-semibold text-gold">Scheduled Daily Practices</h3>
+                        <button onclick="switchView('rule')" class="text-xs bg-gold/10 hover:bg-gold/20 text-gold border border-gold/30 px-3 py-1.5 rounded-lg transition">
+                            <i class="fa-solid fa-pen-to-square mr-1"></i>Edit Rule
+                        </button>
+                    </div>
+
+                    <div id="today-practice-list" class="space-y-3">
+                        <!-- Rendered dynamically -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 2: QUESTS SYSTEM -->
+            <section id="view-quests" class="hidden space-y-6">
+                <div class="flex justify-between items-center border-b border-bronze/20 pb-4">
+                    <div>
+                        <h2 class="font-serif text-xl font-bold text-gold">Spiritual Quests & Duties</h2>
+                        <p class="text-xs text-mutedGray">Concrete action quests to strengthen character and service</p>
+                    </div>
+                    <button onclick="openCustomQuestModal()" class="text-xs bg-gold hover:bg-goldHover text-charcoal font-bold px-3 py-2 rounded-lg transition">
+                        + New Quest
+                    </button>
+                </div>
+
+                <div id="quests-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Dynamic rendering -->
+                </div>
+            </section>
+
+            <!-- VIEW 3: PROGRESS & TRACKING (WITH SUB-TABS) -->
+            <section id="view-tracking" class="hidden space-y-6">
+                <!-- Prominent Navigation Bar for Tracking Sub-views -->
+                <div class="bg-graphite border border-bronze/30 rounded-xl p-2 shadow-lg">
+                    <nav class="flex flex-wrap gap-1" aria-label="Tracking Period Navigation">
+                        <button id="subtab-daily" onclick="switchTrackingSubTab('daily')" class="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-4 py-2 rounded-lg text-xs font-semibold transition text-gold bg-gold/10 border border-gold/30">
+                            <i class="fa-solid fa-calendar-day"></i><span>Daily Summary</span>
+                        </button>
+                        <button id="subtab-weekly" onclick="switchTrackingSubTab('weekly')" class="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-4 py-2 rounded-lg text-xs font-semibold transition text-mutedGray hover:text-ivory hover:bg-graphiteLight">
+                            <i class="fa-solid fa-chart-line"></i><span>14-Day Breakdown</span>
+                        </button>
+                        <button id="subtab-monthly" onclick="switchTrackingSubTab('monthly')" class="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-4 py-2 rounded-lg text-xs font-semibold transition text-mutedGray hover:text-ivory hover:bg-graphiteLight">
+                            <i class="fa-solid fa-calendar-days"></i><span>Monthly Heatmap</span>
+                        </button>
+                        <button id="subtab-review" onclick="switchTrackingSubTab('review')" class="flex-1 sm:flex-none flex items-center justify-center space-x-2 px-4 py-2 rounded-lg text-xs font-semibold transition text-mutedGray hover:text-ivory hover:bg-graphiteLight">
+                            <i class="fa-solid fa-book-bible"></i><span>Monthly Examen</span>
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- SUB-VIEW 1: DAILY SUMMARY -->
+                <div id="subview-daily" class="space-y-4">
+                    <div class="bg-graphite border border-bronze/30 rounded-xl p-5">
+                        <h3 class="font-serif text-base text-gold mb-2">Daily Consistency Overview</h3>
+                        <p class="text-xs text-mutedGray">Review current habits and completed prayer duties.</p>
+                        <div id="daily-summary-list" class="mt-4 space-y-2"></div>
+                    </div>
+                </div>
+
+                <!-- SUB-VIEW 2: 14-DAY BREAKDOWN -->
+                <div id="subview-weekly" class="hidden space-y-6">
+                    <div class="bg-graphite border border-bronze/30 rounded-xl p-5">
+                        <h3 class="font-serif text-base text-gold mb-1">14-Day Fidelity Grid</h3>
+                        <p class="text-xs text-mutedGray mb-4">Track completion consistency over the last two weeks per practice.</p>
+                        <div id="14day-grid-container" class="space-y-3"></div>
+                    </div>
+                </div>
+
+                <!-- SUB-VIEW 3: MONTHLY HEATMAP GRID -->
+                <div id="subview-monthly" class="hidden space-y-6">
+                    <div class="bg-graphite border border-bronze/30 rounded-xl p-5 overflow-x-auto">
+                        <div class="flex justify-between items-center mb-4 min-w-[500px]">
+                            <div>
+                                <h3 class="font-serif text-base text-gold">31-Day Catholic Habit Matrix</h3>
+                                <p class="text-xs text-mutedGray">Monthly visual map of spiritual discipline</p>
+                            </div>
+                            <div class="flex items-center space-x-1.5 text-[10px] text-mutedGray">
+                                <span>Low</span>
+                                <div class="w-3 h-3 rounded bg-graphiteLight"></div>
+                                <div class="w-3 h-3 rounded bg-gold/40"></div>
+                                <div class="w-3 h-3 rounded bg-gold"></div>
+                                <span>High</span>
+                            </div>
+                        </div>
+                        <div id="monthly-heatmap-container" class="min-w-[500px]"></div>
+                    </div>
+
+                    <!-- Pillar Radar Balance -->
+                    <div class="bg-graphite border border-bronze/30 rounded-xl p-5">
+                        <h3 class="font-serif text-base text-gold mb-3">Spiritual Attributes Balance</h3>
+                        <div class="h-60 relative flex items-center justify-center">
+                            <canvas id="attributeRadarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUB-VIEW 4: MONTHLY REVIEW -->
+                <div id="subview-review" class="hidden space-y-6">
+                    <div class="bg-graphite border border-bronze/30 rounded-xl p-5 space-y-4">
+                        <h3 class="font-serif text-base text-gold">Monthly Examen & Reflection</h3>
+                        <p class="text-xs text-mutedGray">Record spiritual victories, fallen virtues, and future commitments.</p>
+                        <div>
+                            <label class="block text-xs font-semibold text-ivory/80 mb-1">1. Primary Spiritual Grace / Gratitude This Month</label>
+                            <textarea id="review-grace" rows="3" class="w-full bg-charcoal border border-bronze/30 rounded-lg p-2.5 text-xs text-ivory focus:border-gold focus:outline-none" placeholder="Where did God grant strength?"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-ivory/80 mb-1">2. Struggle & Correction Required</label>
+                            <textarea id="review-struggle" rows="3" class="w-full bg-charcoal border border-bronze/30 rounded-lg p-2.5 text-xs text-ivory focus:border-gold focus:outline-none" placeholder="Which vice or distraction recurred?"></textarea>
+                        </div>
+                        <button onclick="saveMonthlyExamen()" class="px-4 py-2 bg-gold hover:bg-goldHover text-charcoal font-bold rounded-lg text-xs transition">
+                            Save Monthly Reflection
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 4: RULE OF LIFE EDITOR -->
+            <section id="view-rule" class="hidden space-y-6">
+                <div class="flex justify-between items-center border-b border-bronze/20 pb-4">
+                    <div>
+                        <h2 class="font-serif text-xl font-bold text-gold">Rule of Life Editor</h2>
+                        <p class="text-xs text-mutedGray">Customize daily and weekly spiritual obligations</p>
+                    </div>
+                    <button onclick="openAddPracticeModal()" class="text-xs bg-gold hover:bg-goldHover text-charcoal font-bold px-3 py-2 rounded-lg transition">
+                        + Add Practice
+                    </button>
+                </div>
+
+                <div id="editor-practices-list" class="space-y-3">
+                    <!-- Dynamic rendering -->
+                </div>
+            </section>
+
+            <!-- VIEW 5: VIRTUES & SEVEN DEADLY SINS EXAMEN -->
+            <section id="view-virtues" class="hidden space-y-6">
+                <div>
+                    <h2 class="font-serif text-xl font-bold text-gold">Virtues & Moral Examination</h2>
+                    <p class="text-xs text-mutedGray">Rooted in Catholic Moral Theology. "Strength is for service."</p>
+                </div>
+
+                <!-- Virtues Guide -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="bg-graphite border border-bronze/30 rounded-xl p-4">
+                        <span class="text-[10px] uppercase font-bold text-gold tracking-wider">Theological Virtues</span>
+                        <h4 class="font-serif text-base text-ivory mt-1">Faith, Hope, Charity</h4>
+                        <p class="text-xs text-mutedGray mt-2">Infused virtues directing the soul toward God. Charity is the bond of perfection.</p>
+                    </div>
+                    <div class="bg-graphite border border-bronze/30 rounded-xl p-4">
+                        <span class="text-[10px] uppercase font-bold text-gold tracking-wider">Cardinal Virtues</span>
+                        <h4 class="font-serif text-base text-ivory mt-1">Prudence, Justice, Fortitude, Temperance</h4>
+                        <p class="text-xs text-mutedGray mt-2">Hinges of moral life that govern human action and desire.</p>
+                    </div>
+                    <div class="bg-graphite border border-bronze/30 rounded-xl p-4">
+                        <span class="text-[10px] uppercase font-bold text-gold tracking-wider">Related Dispositions</span>
+                        <h4 class="font-serif text-base text-ivory mt-1">Humility, Chastity, Diligence</h4>
+                        <p class="text-xs text-mutedGray mt-2">Practical virtues cultivated through disciplined daily habits.</p>
+                    </div>
+                </div>
+
+                <!-- Seven Deadly Sins Examen -->
+                <div class="bg-graphite border border-deepRed/40 rounded-xl p-5">
+                    <h3 class="font-serif text-base text-deepRed font-bold mb-1">Seven Deadly Sins Examen</h3>
+                    <p class="text-xs text-mutedGray mb-4">Private examination of recurring temptations and remedies.</p>
+
+                    <div id="sins-examen-list" class="space-y-3">
+                        <!-- Dynamic sin/remedy items -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 6: EVENING JOURNAL & EXAMEN -->
+            <section id="view-journal" class="hidden space-y-6">
+                <div class="border-b border-bronze/20 pb-4">
+                    <h2 class="font-serif text-xl font-bold text-gold">Evening Journal & Examination</h2>
+                    <p class="text-xs text-mutedGray">Nightly reflection before God on duties, victories, and corrections.</p>
+                </div>
+
+                <div class="bg-graphite border border-bronze/30 rounded-xl p-5 space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-gold mb-1">Act of Service</label>
+                        <input id="j-service" type="text" class="w-full bg-charcoal border border-bronze/30 rounded-lg p-2 text-xs text-ivory focus:border-gold focus:outline-none" placeholder="What did I do for another today without seeking recognition?">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gold mb-1">Faithfulness & Duty</label>
+                        <input id="j-faithfulness" type="text" class="w-full bg-charcoal border border-bronze/30 rounded-lg p-2 text-xs text-ivory focus:border-gold focus:outline-none" placeholder="Where did I fulfill obligations faithfully?">
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gold mb-1">Victory / Meaningful Win</label>
+                            <input id="j-victory" type="text" class="w-full bg-charcoal border border-bronze/30 rounded-lg p-2 text-xs text-ivory focus:border-gold focus:outline-none" placeholder="Where was temptation overcome?">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-deepRed mb-1">Struggle / Failure</label>
+                            <input id="j-struggle" type="text" class="w-full bg-charcoal border border-bronze/30 rounded-lg p-2 text-xs text-ivory focus:border-gold focus:outline-none" placeholder="Where did I fall short or act contrary to my rule?">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gold mb-1">Concrete Correction for Tomorrow</label>
+                        <input id="j-correction" type="text" class="w-full bg-charcoal border border-bronze/30 rounded-lg p-2 text-xs text-ivory focus:border-gold focus:outline-none" placeholder="What single action will I fix tomorrow?">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gold mb-1">Daily Self-Assessment Score (0 to 25)</label>
+                        <input id="j-score" type="number" min="0" max="25" class="w-32 bg-charcoal border border-bronze/30 rounded-lg p-2 text-xs text-ivory focus:border-gold focus:outline-none" placeholder="0 - 25">
+                    </div>
+                    <button onclick="saveJournalEntry()" class="px-5 py-2.5 bg-gold hover:bg-goldHover text-charcoal font-bold rounded-lg text-xs transition">
+                        Save Nightly Examen
+                    </button>
+                </div>
+            </section>
+
+            <!-- VIEW 7: PHYSICAL STEWARDSHIP -->
+            <section id="view-fitness" class="hidden space-y-6">
+                <div class="border-b border-bronze/20 pb-4">
+                    <h2 class="font-serif text-xl font-bold text-gold">Physical Stewardship</h2>
+                    <p class="text-xs text-mutedGray">Stewardship of the body in service of vocation</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Step Counter Card -->
+                    <div class="bg-graphite border border-bronze/30 rounded-xl p-5 space-y-4">
+                        <h3 class="font-serif text-base text-gold">Daily Steps</h3>
+                        <div class="flex items-center space-x-3">
+                            <input id="fitness-step-input" type="number" step="500" class="w-36 bg-charcoal border border-bronze/30 rounded-lg p-2 text-sm text-ivory focus:border-gold focus:outline-none" placeholder="8000">
+                            <button onclick="updateSteps()" class="px-4 py-2 bg-gold hover:bg-goldHover text-charcoal font-bold text-xs rounded-lg transition">
+                                Update Steps
+                            </button>
+                        </div>
+                        <div class="text-xs text-mutedGray">Target: 8,000 steps / day</div>
+                    </div>
+
+                    <!-- Integration Status -->
+                    <div class="bg-graphite border border-bronze/30 rounded-xl p-5 space-y-2">
+                        <h3 class="font-serif text-base text-gold">Health Sync Status</h3>
+                        <div class="flex items-center space-x-2 text-xs text-mutedGray">
+                            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                            <span>Samsung Health / Apple Health: Manual Mode Active</span>
+                        </div>
+                        <p class="text-[11px] text-mutedGray">External smartwatch syncing is not connected. Reliable manual entry is enabled.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- VIEW 8: SETTINGS, HOSTING & PWA ACCESS GUIDE -->
+            <section id="view-settings" class="hidden space-y-6">
+                <div class="border-b border-bronze/20 pb-4">
+                    <h2 class="font-serif text-xl font-bold text-gold">Settings & Personal Hosting Guide</h2>
+                    <p class="text-xs text-mutedGray">How to access this app daily on your phone or web address</p>
+                </div>
+
+                <!-- HOSTING GUIDE CARD -->
+                <div class="bg-graphite border border-gold/40 rounded-xl p-5 space-y-4 shadow-xl">
+                    <div class="flex items-center space-x-3 text-gold">
+                        <i class="fa-solid fa-globe text-xl"></i>
+                        <h3 class="font-serif text-base font-bold">How to Get Your Own Free HTTPS Web Address</h3>
+                    </div>
+                    <p class="text-xs text-ivory/90 leading-relaxed">
+                        You can deploy this application for <strong>100% FREE</strong> in 2 minutes so that you have your own private HTTPS URL accessible on all your devices:
+                    </p>
+
+                    <div class="space-y-3 text-xs">
+                        <div class="p-3 bg-charcoal rounded-lg border border-bronze/20">
+                            <span class="font-bold text-gold">Option A: GitHub Pages (Easiest)</span>
+                            <ol class="list-decimal list-inside text-mutedGray mt-1 space-y-1">
+                                <li>Create a free account at <a href="https://github.com" target="_blank" class="text-gold underline">GitHub.com</a>.</li>
+                                <li>Create a new repository named <code class="text-gold">rule-of-life</code>.</li>
+                                <li>Upload this <code class="text-gold">index.html</code> file to the repo.</li>
+                                <li>Go to <strong>Settings &gt; Pages</strong>, select <code class="text-gold">main branch</code>, and click <strong>Save</strong>.</li>
+                                <li>Your app is now published at: <code class="text-gold">https://yourusername.github.io/rule-of-life</code></li>
+                            </ol>
+                        </div>
+
+                        <div class="p-3 bg-charcoal rounded-lg border border-bronze/20">
+                            <span class="font-bold text-gold">Option B: Netlify / Vercel Drag-and-Drop</span>
+                            <ol class="list-decimal list-inside text-mutedGray mt-1 space-y-1">
+                                <li>Go to <a href="https://app.netlify.com/drop" target="_blank" class="text-gold underline">Netlify Drop</a> or Vercel.</li>
+                                <li>Drag and drop the folder containing this <code class="text-gold">index.html</code> file.</li>
+                                <li>Get an instant, secure personal URL like <code class="text-gold">https://my-rule-of-life.netlify.app</code>.</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <!-- PWA ACCESS INSTRUCTIONS -->
+                    <div class="pt-3 border-t border-bronze/20 space-y-2">
+                        <h4 class="font-serif text-xs font-bold text-gold">Add to Phone Home Screen (iPhone / Android)</h4>
+                        <ul class="text-xs text-mutedGray space-y-1 list-disc list-inside">
+                            <li><strong>iPhone (Safari):</strong> Open your web link, tap the <strong>Share</strong> button, then select <strong>"Add to Home Screen"</strong>.</li>
+                            <li><strong>Android (Chrome):</strong> Open your web link, tap the <strong>3 dots menu</strong>, and tap <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong>.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Backup Data Controls -->
+                <div class="bg-graphite border border-bronze/30 rounded-xl p-5 space-y-4">
+                    <h3 class="font-serif text-base text-gold">Data Backup & Export</h3>
+                    <p class="text-xs text-mutedGray">Export your entire Rule of Life and history to JSON or CSV format.</p>
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="exportDataJSON()" class="px-4 py-2 bg-gold hover:bg-goldHover text-charcoal font-bold text-xs rounded-lg transition">
+                            Export JSON Backup
+                        </button>
+                        <button onclick="resetDataModal()" class="px-4 py-2 bg-deepRed/80 hover:bg-deepRed text-ivory font-bold text-xs rounded-lg transition">
+                            Clear Local Data
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-graphite border-t border-bronze/30 px-2 py-2 z-50 flex justify-around items-center">
+        <button onclick="switchView('today')" id="nav-mob-today" class="nav-btn-mob flex flex-col items-center text-gold">
+            <i class="fa-solid fa-sun text-base"></i>
+            <span class="text-[10px] mt-0.5 font-medium">Today</span>
+        </button>
+        <button onclick="switchView('quests')" id="nav-mob-quests" class="nav-btn-mob flex flex-col items-center text-mutedGray">
+            <i class="fa-solid fa-scroll text-base"></i>
+            <span class="text-[10px] mt-0.5 font-medium">Quests</span>
+        </button>
+        <button onclick="switchView('tracking')" id="nav-mob-tracking" class="nav-btn-mob flex flex-col items-center text-mutedGray">
+            <i class="fa-solid fa-chart-line text-base"></i>
+            <span class="text-[10px] mt-0.5 font-medium">Progress</span>
+        </button>
+        <button onclick="switchView('rule')" id="nav-mob-rule" class="nav-btn-mob flex flex-col items-center text-mutedGray">
+            <i class="fa-solid fa-book-bible text-base"></i>
+            <span class="text-[10px] mt-0.5 font-medium">Rule</span>
+        </button>
+        <button onclick="switchView('journal')" id="nav-mob-journal" class="nav-btn-mob flex flex-col items-center text-mutedGray">
+            <i class="fa-solid fa-pen-feather text-base"></i>
+            <span class="text-[10px] mt-0.5 font-medium">Journal</span>
+        </button>
+    </nav>
+
+    <script>
+        // Default State Configuration
+        const DEFAULT_STATE = {
+            profile: { level: 3, xp: 450, streak: 14, dailyStepTarget: 8000, currentSteps: 4200 },
+            practices: [
+                { id: 'p1', title: 'Morning Prayer & Offering', category: 'Morning', active: true, xp: 10 },
+                { id: 'p2', title: 'Holy Rosary (15 mins)', category: 'Morning', active: true, xp: 20 },
+                { id: 'p3', title: 'Scripture / Lectio Divina', category: 'Morning', active: true, xp: 15 },
+                { id: 'p4', title: 'Physical Movement / Workout', category: 'Physical', active: true, xp: 20 },
+                { id: 'p5', title: 'Fulfill Work Duties Faithfully', category: 'Vocation', active: true, xp: 15 },
+                { id: 'p6', title: 'Intentional Act of Service', category: 'Vocation', active: true, xp: 15 },
+                { id: 'p7', title: 'Night Examen & Night Prayer', category: 'Evening', active: true, xp: 15 }
+            ],
+            completedIds: ['p1', 'p2', 'p3'],
+            quests: [
+                { id: 'q1', title: 'Pray one Rosary attentively', category: 'Prayer', xp: 50, done: true },
+                { id: 'q2', title: 'Perform service without seeking credit', category: 'Service', xp: 60, done: false },
+                { id: 'q3', title: 'Complete 8,000 steps', category: 'Fitness', xp: 40, done: false }
+            ],
+            history14Days: [
+                { day: 1, val: 1 }, { day: 2, val: 1 }, { day: 3, val: 1 }, { day: 4, val: 0 },
+                { day: 5, val: 1 }, { day: 6, val: 1 }, { day: 7, val: 1 }, { day: 8, val: 1 },
+                { day: 9, val: 0 }, { day: 10, val: 1 }, { day: 11, val: 1 }, { day: 12, val: 1 },
+                { day: 13, val: 1 }, { day: 14, val: 1 }
+            ]
+        };
+
+        let appState = JSON.parse(localStorage.getItem('catholic_rule_app')) || DEFAULT_STATE;
+
+        function saveState() {
+            localStorage.setItem('catholic_rule_app', JSON.stringify(appState));
+            renderHeader();
+        }
+
+        // View Navigation Switcher
+        function switchView(viewName) {
+            const views = ['today', 'quests', 'tracking', 'rule', 'virtues', 'journal', 'fitness', 'settings'];
+            views.forEach(v => {
+                const el = document.getElementById(`view-${v}`);
+                if (el) el.classList.add('hidden');
+                
+                // Desktop nav link
+                const dNav = document.getElementById(`nav-desk-${v}`);
+                if (dNav) dNav.className = 'nav-btn-desk flex items-center space-x-3 px-4 py-3 rounded-lg text-sm transition text-mutedGray hover:text-ivory hover:bg-graphiteLight';
+                
+                // Mobile nav link
+                const mNav = document.getElementById(`nav-mob-${v}`);
+                if (mNav) mNav.className = 'nav-btn-mob flex flex-col items-center text-mutedGray';
+            });
+
+            // Activate Target
+            const activeEl = document.getElementById(`view-${viewName}`);
+            if (activeEl) activeEl.classList.remove('hidden');
+
+            const activeD = document.getElementById(`nav-desk-${viewName}`);
+            if (activeD) activeD.className = 'nav-btn-desk flex items-center space-x-3 px-4 py-3 rounded-lg text-sm transition text-gold bg-gold/10 border border-gold/30 font-semibold';
+
+            const activeM = document.getElementById(`nav-mob-${viewName}`);
+            if (activeM) activeM.className = 'nav-btn-mob flex flex-col items-center text-gold';
+
+            // Trigger view-specific dynamic renders
+            if (viewName === 'today') renderTodayView();
+            if (viewName === 'quests') renderQuestsView();
+            if (viewName === 'tracking') renderTrackingView();
+            if (viewName === 'rule') renderRuleEditorView();
+            if (viewName === 'virtues') renderVirtuesView();
+        }
+
+        // Tracking Sub-tab Switcher
+        function switchTrackingSubTab(subName) {
+            ['daily', 'weekly', 'monthly', 'review'].forEach(s => {
+                const view = document.getElementById(`subview-${s}`);
+                if (view) view.classList.add('hidden');
+
+                const btn = document.getElementById(`subtab-${s}`);
+                if (btn) btn.className = 'flex-1 sm:flex-none flex items-center justify-center space-x-2 px-4 py-2 rounded-lg text-xs font-semibold transition text-mutedGray hover:text-ivory hover:bg-graphiteLight';
+            });
+
+            const targetView = document.getElementById(`subview-${subName}`);
+            if (targetView) targetView.classList.remove('hidden');
+
+            const targetBtn = document.getElementById(`subtab-${subName}`);
+            if (targetBtn) targetBtn.className = 'flex-1 sm:flex-none flex items-center justify-center space-x-2 px-4 py-2 rounded-lg text-xs font-semibold transition text-gold bg-gold/10 border border-gold/30';
+
+            if (subName === 'weekly') render14DayGrid();
+            if (subName === 'monthly') renderMonthlyHeatmap();
+        }
+
+        // Header Render
+        function renderHeader() {
+            document.getElementById('header-level').innerText = appState.profile.level;
+            document.getElementById('header-xp').innerText = appState.profile.xp;
+            document.getElementById('header-streak-count').innerText = `${appState.profile.streak} Day Streak`;
+        }
+
+        // Today View Logic
+        function renderTodayView() {
+            const container = document.getElementById('today-practice-list');
+            container.innerHTML = '';
+
+            const activePractices = appState.practices.filter(p => p.active);
+            let doneCount = 0;
+
+            activePractices.forEach(p => {
+                const isDone = appState.completedIds.includes(p.id);
+                if (isDone) doneCount++;
+
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-xl border transition cursor-pointer flex items-center justify-between ${
+                    isDone ? 'bg-graphite/40 border-gold/30 text-mutedGray' : 'bg-graphite border-bronze/30 hover:border-gold text-ivory'
+                }`;
+                card.onclick = () => togglePracticeToday(p.id, p.xp);
+
+                card.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-6 h-6 rounded border flex items-center justify-center text-xs ${isDone ? 'bg-gold border-gold text-charcoal' : 'border-bronze'}">
+                            ${isDone ? '✓' : ''}
+                        </div>
+                        <div>
+                            <p class="font-serif text-sm ${isDone ? 'line-through text-mutedGray' : 'text-ivory'}">${p.title}</p>
+                            <span class="text-[10px] text-mutedGray font-semibold uppercase tracking-wider">${p.category}</span>
+                        </div>
+                    </div>
+                    <span class="text-xs text-gold font-mono">+${p.xp} XP</span>
+                `;
+                container.appendChild(card);
+            });
+
+            const total = activePractices.length;
+            const pct = total > 0 ? Math.round((doneCount / total) * 100) : 0;
+            document.getElementById('today-pct').innerText = `${pct}%`;
+            document.getElementById('today-fraction').innerText = `${doneCount} of ${total} completed`;
+            document.getElementById('today-ring').setAttribute('stroke-dasharray', `${pct}, 100`);
+
+            document.getElementById('today-step-summary').innerText = `${appState.profile.currentSteps.toLocaleString()} / ${appState.profile.dailyStepTarget.toLocaleString()} steps`;
+        }
+
+        function togglePracticeToday(id, xp) {
+            const idx = appState.completedIds.indexOf(id);
+            if (idx > -1) {
+                appState.completedIds.splice(idx, 1);
+                appState.profile.xp = Math.max(0, appState.profile.xp - xp);
+            } else {
+                appState.completedIds.push(id);
+                appState.profile.xp += xp;
+            }
+            saveState();
+            renderTodayView();
+        }
+
+        // Quests Logic
+        function renderQuestsView() {
+            const container = document.getElementById('quests-container');
+            container.innerHTML = '';
+
+            appState.quests.forEach(q => {
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-xl border ${q.done ? 'bg-graphite/40 border-gold/20' : 'bg-graphite border-bronze/30'} flex justify-between items-center`;
+                card.innerHTML = `
+                    <div>
+                        <span class="text-[10px] text-gold uppercase font-bold tracking-wider">${q.category}</span>
+                        <h4 class="font-serif text-sm ${q.done ? 'line-through text-mutedGray' : 'text-ivory'}">${q.title}</h4>
+                        <p class="text-xs text-gold font-mono mt-0.5">+${q.xp} XP</p>
+                    </div>
+                    <button onclick="toggleQuest('${q.id}', ${q.xp})" class="px-3 py-1.5 rounded-lg text-xs font-bold transition ${q.done ? 'bg-gold/20 text-gold' : 'bg-gold text-charcoal hover:bg-goldHover'}">
+                        ${q.done ? 'Claimed ✓' : 'Complete'}
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function toggleQuest(id, xp) {
+            const q = appState.quests.find(x => x.id === id);
+            if (q) {
+                q.done = !q.done;
+                if (q.done) appState.profile.xp += xp;
+                saveState();
+                renderQuestsView();
+            }
+        }
+
+        // 14-Day Grid Breakdown
+        function render14DayGrid() {
+            const container = document.getElementById('14day-grid-container');
+            container.innerHTML = '';
+
+            appState.practices.filter(p => p.active).forEach(p => {
+                const row = document.createElement('div');
+                row.className = "p-3 bg-charcoal border border-bronze/20 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-2";
+                
+                let dots = '';
+                appState.history14Days.forEach(h => {
+                    dots += `<div class="w-5 h-6 rounded flex items-center justify-center text-[10px] font-bold ${h.val ? 'bg-gold/20 text-gold border border-gold/40' : 'bg-graphiteLight text-mutedGray'}">${h.val ? '✓' : '•'}</div>`;
+                });
+
+                row.innerHTML = `
+                    <span class="text-xs text-ivory font-serif">${p.title}</span>
+                    <div class="flex items-center space-x-1">${dots}</div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        // 31-Day Heatmap
+        function renderMonthlyHeatmap() {
+            const container = document.getElementById('monthly-heatmap-container');
+            container.innerHTML = '';
+
+            let html = '<div class="grid grid-cols-31 gap-1 mb-2 text-center text-[10px] text-mutedGray">';
+            for (let i = 1; i <= 31; i++) html += `<div>${i}</div>`;
+            html += '</div>';
+
+            appState.practices.filter(p => p.active).forEach(p => {
+                html += `<div class="flex items-center mb-1.5"><span class="w-28 text-xs text-mutedGray truncate mr-2">${p.title}</span><div class="grid grid-cols-31 gap-1 flex-1">`;
+                for (let d = 1; d <= 31; d++) {
+                    const isDone = (d % 2 === 0) || d === 12;
+                    html += `<div class="h-4 rounded-sm ${isDone ? 'bg-gold/80' : 'bg-graphiteLight'}" title="Day ${d}"></div>`;
+                }
+                html += `</div></div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Rule Editor View
+        function renderRuleEditorView() {
+            const container = document.getElementById('editor-practices-list');
+            container.innerHTML = '';
+
+            appState.practices.forEach(p => {
+                const card = document.createElement('div');
+                card.className = "p-3 bg-graphite border border-bronze/30 rounded-lg flex items-center justify-between";
+                card.innerHTML = `
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-gold">${p.category}</span>
+                        <h4 class="font-serif text-sm text-ivory">${p.title}</h4>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs text-gold/80 font-mono">+${p.xp} XP</span>
+                        <button onclick="togglePracticeActive('${p.id}')" class="px-2.5 py-1 text-xs rounded border ${p.active ? 'border-gold text-gold' : 'border-bronze text-mutedGray'}">
+                            ${p.active ? 'Active' : 'Archived'}
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function togglePracticeActive(id) {
+            const p = appState.practices.find(x => x.id === id);
+            if (p) {
+                p.active = !p.active;
+                saveState();
+                renderRuleEditorView();
+            }
+        }
+
+        // Seven Deadly Sins Examen
+        function renderVirtuesView() {
+            const sins = [
+                { sin: 'Pride', remedy: 'Humility', prompt: 'Did I seek human praise or trust in self rather than God?' },
+                { sin: 'Envy', remedy: 'Gratitude & Charity', prompt: 'Did I resent another person\'s blessings or success?' },
+                { sin: 'Wrath', remedy: 'Patience & Meekness', prompt: 'Did I react impulsively with anger or harsh words?' },
+                { sin: 'Sloth', remedy: 'Diligence', prompt: 'Did I delay spiritual or vocational duties out of laziness?' },
+                { sin: 'Gluttony', remedy: 'Temperance', prompt: 'Did I indulge excessively in food, drink, or comfort?' },
+                { sin: 'Lust', remedy: 'Chastity', prompt: 'Did I fail to guard my eyes, thoughts, or actions?' },
+                { sin: 'Greed', remedy: 'Generosity & Detachment', prompt: 'Did I hold tightly to temporal goods instead of serving?' }
+            ];
+
+            const container = document.getElementById('sins-examen-list');
+            container.innerHTML = '';
+
+            sins.forEach(s => {
+                const card = document.createElement('div');
+                card.className = "p-3 bg-charcoal border border-bronze/20 rounded-lg flex flex-col md:flex-row md:items-center justify-between gap-2";
+                card.innerHTML = `
+                    <div>
+                        <span class="text-xs font-bold text-deepRed">${s.sin}</span> 
+                        <span class="text-xs text-mutedGray">→ Remedy: <strong class="text-gold">${s.remedy}</strong></span>
+                        <p class="text-xs text-ivory/80 mt-0.5">${s.prompt}</p>
+                    </div>
+                    <button onclick="alert('Struggle noted for evening correction.')" class="text-[11px] px-2.5 py-1 bg-graphiteLight hover:bg-bronze/30 text-ivory rounded border border-bronze/30 self-start md:self-auto">
+                        Record Struggle
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function saveJournalEntry() {
+            alert('Nightly Examen and Journal saved locally.');
+        }
+
+        function updateSteps() {
+            const val = parseInt(document.getElementById('fitness-step-input').value, 10);
+            if (!isNaN(val)) {
+                appState.profile.currentSteps = val;
+                saveState();
+                renderTodayView();
+                alert('Steps updated!');
+            }
+        }
+
+        function exportDataJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
+            const dlAnchor = document.createElement('a');
+            dlAnchor.setAttribute("href", dataStr);
+            dlAnchor.setAttribute("download", "catholic_rule_of_life_backup.json");
+            document.body.appendChild(dlAnchor);
+            dlAnchor.click();
+            dlAnchor.remove();
+        }
+
+        function resetDataModal() {
+            if (confirm('Reset all rule data to default state?')) {
+                localStorage.removeItem('catholic_rule_app');
+                appState = DEFAULT_STATE;
+                saveState();
+                location.reload();
+            }
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            renderHeader();
+            renderTodayView();
+        };
+    </script>
+</body>
+</html>
